@@ -341,7 +341,7 @@ public abstract class AbstractCallbackAnalyzer {
 		throw new RuntimeException("Could not find method");
 	}
 
-	private void analyzeClassInterfaceCallbacks(SootClass baseClass, SootClass sootClass,
+	protected void analyzeClassInterfaceCallbacks(SootClass baseClass, SootClass sootClass,
 			SootClass lifecycleElement) {
 		// We cannot create instances of abstract classes anyway, so there is no
 		// reason to look for interface implementations
