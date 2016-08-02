@@ -333,7 +333,7 @@ public abstract class AbstractCallbackAnalyzer {
 		}
 	}
 	
-	private SootMethod getMethodFromHierarchyEx(SootClass c, String methodSignature) {
+	protected SootMethod getMethodFromHierarchyEx(SootClass c, String methodSignature) {
 		if (c.declaresMethod(methodSignature))
 			return c.getMethod(methodSignature);
 		if (c.hasSuperclass())
@@ -404,7 +404,7 @@ public abstract class AbstractCallbackAnalyzer {
 		return true;
 	}
 
-	private Set<SootClass> collectAllInterfaces(SootClass sootClass) {
+	protected Set<SootClass> collectAllInterfaces(SootClass sootClass) {
 		Set<SootClass> interfaces = new HashSet<SootClass>(sootClass.getInterfaces());
 		for (SootClass i : sootClass.getInterfaces())
 			interfaces.addAll(collectAllInterfaces(i));
