@@ -163,7 +163,7 @@ public abstract class AbstractCallbackAnalyzer {
 						iinv.getMethodRef().getSubSignature().getString());
 				for (int i = 0; i < parameters.length; i++) {
 					String param = parameters[i];
-					if (androidCallbacks.contains(param)) {
+					if (isAndroidCallback(param)) {
 						Value arg = iinv.getArg(i);
 						
 						// We have a formal parameter type that corresponds to one of the Android
@@ -193,7 +193,11 @@ public abstract class AbstractCallbackAnalyzer {
 		for (SootClass callbackClass : callbackClasses)
 			analyzeClass(callbackClass, lifecycleElement);
 	}
-	
+
+	protected boolean isAndroidCallback(String typeName) {
+		return androidCallbacks.contains(typeName);
+	}
+
 	/**
 	 * Checks whether the given method dynamically registers a new broadcast
 	 * receiver
@@ -296,7 +300,7 @@ public abstract class AbstractCallbackAnalyzer {
 		analyzeClassInterfaceCallbacks(sootClass, sootClass, lifecycleElement);
 	}
 	
-	protected void analyzeMethodOverrideCallbacks(SootClass sootClass) {
+	protected void analyzeMethodOverrideCallbacks(SootClass sootClass, SootClass lifecycleElement) {
 		if (!sootClass.isConcrete())
 			return;
 		if (sootClass.isInterface())
@@ -320,7 +324,7 @@ public abstract class AbstractCallbackAnalyzer {
 		
 		// Iterate over all user-implemented methods. If they are inherited
 		// from a system class, they are callback candidates.
-		for (SootClass parentClass : Scene.v().getActiveHierarchy().getSubclassesOfIncluding(sootClass)) {
+		for (SootClass parentClass : Scene.v().getActiveHierarchy().getSuperclassesOfIncluding(sootClass)) {
 			if (parentClass.getName().startsWith("android."))
 				continue;
 			for (SootMethod method : parentClass.getMethods()) {
@@ -328,7 +332,7 @@ public abstract class AbstractCallbackAnalyzer {
 					continue;
 
 				// This is a real callback method
-				checkAndAddMethod(method, sootClass);
+				checkAndAddMethod(method, lifecycleElement);
 			}
 		}
 	}
@@ -360,7 +364,7 @@ public abstract class AbstractCallbackAnalyzer {
 		
 		// Do we implement one of the well-known interfaces?
 		for (SootClass i : collectAllInterfaces(sootClass)) {
-			if (androidCallbacks.contains(i.getName()))
+			if (isAndroidCallback(i.getName()))
 				for (SootMethod sm : i.getMethods())
 					checkAndAddMethod(getMethodFromHierarchyEx(baseClass,
 							sm.getSubSignature()), lifecycleElement);

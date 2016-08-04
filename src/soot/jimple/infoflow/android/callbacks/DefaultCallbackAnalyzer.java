@@ -84,7 +84,7 @@ public class DefaultCallbackAnalyzer extends AbstractCallbackAnalyzer {
 					analyzeRechableMethods(sc, methods);
 
 					// Check for method overrides
-					analyzeMethodOverrideCallbacks(sc);
+					analyzeMethodOverrideCallbacks(sc, sc);
 				}
 				System.out.println("Callback analysis done.");
 			}

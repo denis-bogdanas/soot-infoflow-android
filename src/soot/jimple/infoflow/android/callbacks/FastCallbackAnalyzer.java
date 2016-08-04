@@ -56,7 +56,7 @@ public class FastCallbackAnalyzer extends AbstractCallbackAnalyzer {
 				}
 				
 				// Check for method overrides
-				analyzeMethodOverrideCallbacks(sc);
+				analyzeMethodOverrideCallbacks(sc, null);
 			}
 		}
 	}
