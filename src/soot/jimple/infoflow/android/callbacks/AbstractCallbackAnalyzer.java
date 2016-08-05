@@ -10,34 +10,10 @@
  ******************************************************************************/
 package soot.jimple.infoflow.android.callbacks;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
-import java.io.IOException;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Set;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import soot.Body;
-import soot.Local;
-import soot.RefType;
-import soot.Scene;
-import soot.SootClass;
-import soot.SootMethod;
-import soot.Type;
-import soot.Unit;
-import soot.Value;
-import soot.jimple.DefinitionStmt;
-import soot.jimple.IdentityStmt;
-import soot.jimple.InstanceInvokeExpr;
-import soot.jimple.InvokeExpr;
-import soot.jimple.ReturnVoidStmt;
-import soot.jimple.Stmt;
+import soot.*;
+import soot.jimple.*;
 import soot.jimple.infoflow.android.InfoflowAndroidConfiguration;
 import soot.jimple.infoflow.android.data.AndroidMethod;
 import soot.jimple.infoflow.data.SootMethodAndClass;
@@ -47,6 +23,12 @@ import soot.jimple.toolkits.callgraph.Edge;
 import soot.toolkits.graph.ExceptionalUnitGraph;
 import soot.toolkits.scalar.SimpleLiveLocals;
 import soot.toolkits.scalar.SmartLocalDefs;
+
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
+import java.util.*;
 
 /**
  * Analyzes the classes in the APK file to find custom implementations of the
@@ -316,7 +298,7 @@ public abstract class AbstractCallbackAnalyzer {
 		// Android OS class, we treat it as a potential callback.
 		Set<String> systemMethods = new HashSet<String>(10000);
 		for (SootClass parentClass : Scene.v().getActiveHierarchy().getSuperclassesOf(sootClass)) {
-			if (SystemClassHandler.isClassInSystemPackage(parentClass.getName()))
+			if (isClassInAndroidPackage(parentClass.getName()))
 				for (SootMethod sm : parentClass.getMethods())
 					if (!sm.isConstructor())
 						systemMethods.add(sm.getSubSignature());
@@ -325,7 +307,7 @@ public abstract class AbstractCallbackAnalyzer {
 		// Iterate over all user-implemented methods. If they are inherited
 		// from a system class, they are callback candidates.
 		for (SootClass parentClass : Scene.v().getActiveHierarchy().getSuperclassesOfIncluding(sootClass)) {
-			if (parentClass.getName().startsWith("android."))
+			if (SystemClassHandler.isClassInSystemPackage(parentClass.getName()))
 				continue;
 			for (SootMethod method : parentClass.getMethods()) {
 				if (!systemMethods.contains(method.getSubSignature()))
@@ -336,13 +318,18 @@ public abstract class AbstractCallbackAnalyzer {
 			}
 		}
 	}
+
+	public static boolean isClassInAndroidPackage(String className) {
+		return className.startsWith("android.")
+				|| className.startsWith("com.google.");
+	}
 	
 	protected SootMethod getMethodFromHierarchyEx(SootClass c, String methodSignature) {
 		if (c.declaresMethod(methodSignature))
 			return c.getMethod(methodSignature);
 		if (c.hasSuperclass())
 			return getMethodFromHierarchyEx(c.getSuperclass(), methodSignature);
-		throw new RuntimeException("Could not find method");
+		throw new RuntimeException("Could not find method: " + methodSignature + " in " + c);
 	}
 
 	protected void analyzeClassInterfaceCallbacks(SootClass baseClass, SootClass sootClass,
@@ -389,9 +376,14 @@ public abstract class AbstractCallbackAnalyzer {
 			return false;
 
 		// Skip empty methods
-		if (method.isConcrete() && isEmpty(method.retrieveActiveBody()))
+		try {
+			if (method.isConcrete() && isEmpty(method.retrieveActiveBody()))
+                return false;
+		} catch (Exception e) {
+			System.err.println("Exception in retrieveActiveBody() for " + method +" : " + e.getMessage());
 			return false;
-		
+		}
+
 		String componentName = baseClass == null ? "" : baseClass.getName();
 		Set<SootMethodAndClass> methods = this.callbackMethods.get(componentName);
 		if (methods == null) {
