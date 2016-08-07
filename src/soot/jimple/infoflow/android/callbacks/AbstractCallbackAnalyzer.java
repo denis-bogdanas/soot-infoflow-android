@@ -124,8 +124,7 @@ public abstract class AbstractCallbackAnalyzer {
 	 */
 	protected void analyzeMethodForCallbackRegistrations(SootClass lifecycleElement, SootMethod method) {
 		// Do not analyze system classes
-		if (method.getDeclaringClass().getName().startsWith("android.")
-				|| method.getDeclaringClass().getName().startsWith("java."))
+		if (SystemClassHandler.isClassInSystemPackage(method.getDeclaringClass().getName()))
 			return;
 		if (!method.isConcrete())
 			return;
@@ -274,8 +273,7 @@ public abstract class AbstractCallbackAnalyzer {
 	 */
 	private void analyzeClass(SootClass sootClass, SootClass lifecycleElement) {
 		// Do not analyze system classes
-		if (sootClass.getName().startsWith("android.")
-				|| sootClass.getName().startsWith("java."))
+		if (SystemClassHandler.isClassInSystemPackage(sootClass.getName()))
 			return;
 		
 		// Check for callback handlers implemented via interfaces
@@ -320,8 +318,7 @@ public abstract class AbstractCallbackAnalyzer {
 	}
 
 	public static boolean isClassInAndroidPackage(String className) {
-		return className.startsWith("android.")
-				|| className.startsWith("com.google.");
+		return className.startsWith("android.") || className.startsWith("com.google.android.");
 	}
 	
 	protected SootMethod getMethodFromHierarchyEx(SootClass c, String methodSignature) {
