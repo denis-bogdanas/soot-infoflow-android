@@ -296,7 +296,7 @@ public abstract class AbstractCallbackAnalyzer {
 		// Android OS class, we treat it as a potential callback.
 		Set<String> systemMethods = new HashSet<String>(10000);
 		for (SootClass parentClass : Scene.v().getActiveHierarchy().getSuperclassesOf(sootClass)) {
-			if (isClassInAndroidPackage(parentClass.getName()))
+			if (isMethodOverrideCallback(parentClass))
 				for (SootMethod sm : parentClass.getMethods())
 					if (!sm.isConstructor())
 						systemMethods.add(sm.getSubSignature());
@@ -315,6 +315,10 @@ public abstract class AbstractCallbackAnalyzer {
 				checkAndAddMethod(method, lifecycleElement);
 			}
 		}
+	}
+
+	protected boolean isMethodOverrideCallback(SootClass parentClass) {
+		return isClassInAndroidPackage(parentClass.getName());
 	}
 
 	public static boolean isClassInAndroidPackage(String className) {
